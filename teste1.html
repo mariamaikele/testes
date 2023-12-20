@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Cartas</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+        .card-thumbnail {
+            max-width: 50px;
+            max-height: 50px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Jogo de Cartas</h1>
+
+    <!-- Formulário para inserir o nome do jogador -->
+    <label for="playerName">Seu Nome:</label>
+    <input type="text" id="playerName" placeholder="Digite seu nome">
+    <button onclick="joinGame()">Entrar no Jogo</button>
+
+    <!-- Área do jogo -->
+    <div id="gameArea" class="hidden">
+        <h2>Sua Mão de Cartas</h2>
+        <div id="playerHand"></div>
+
+        <label for="cardSelector">Escolha uma carta:</label>
+        <select id="cardSelector"></select>
+        <img id="selectedCardThumbnail" class="card-thumbnail" src="" alt="Carta Selecionada">
+        <button onclick="chooseCard()">Escolher Carta</button>
+
+        <h2>Cartas Selecionadas pelos Jogadores</h2>
+        <div id="chosenCards"></div>
+
+        <button onclick="nextRound()" id="nextRoundButton" class="hidden">Próxima Rodada</button>
+    </div>
+
+    <script>
+        // Definição do baralho com nomes e URLs de imagem
+        const cardDeck = [
+            { name: "Carta 1", imageUrl: "https://i.pinimg.com/736x/30/fc/59/30fc59eb7314db8e930df469d217c7cc.jpg" },
+            { name: "Carta 2", imageUrl: "url_carta_2.jpg" },
+            // ... Adicione os demais nomes e URLs de imagem até ter 120 cartas
+        ];
+
+        // Variáveis do jogo
+        let players = [];
+        let currentPlayerIndex = 0;
+        let playerHands = {};
+        let chosenCards = {};
+
+        // Função para entrar no jogo
+        function joinGame() {
+            const playerName = document.getElementById('playerName').value;
+            if (!playerName) {
+                alert('Por favor, digite seu nome.');
+                return;
+            }
+
+            players.push(playerName);
+            playerHands[playerName] = {
+                cards: getRandomCards(cardDeck, 10),
+            };
+
+            // Exibir a mão do jogador e as opções de seleção
+            updatePlayerHand();
+            updateSelectors();
+
+            // Mostrar área do jogo e esconder o formulário
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('playerName').disabled = true;
+        }
+
+        // Função para escolher uma carta
+        function chooseCard() {
+            const currentPlayer = players[currentPlayerIndex];
+            const selectedCard = document.getElementById('cardSelector').value;
+
+            // Adicionar carta escolhida ao histórico
+            chosenCards[currentPlayer] = selectedCard;
+
+            // Exibir carta escolhida na área de cartas selecionadas
+            updateChosenCards();
+
+            // Exibir miniatura da carta
+            document.getElementById('selectedCardThumbnail').src = cardDeck.find(card => card.name === selectedCard)?.imageUrl || '';
+
+            // Exibir botão "Próxima Rodada"
+            document.getElementById('nextRoundButton').classList.remove('hidden');
+
+            // Desabilitar botão de escolha após a escolha
+            document.getElementById('cardSelector').disabled = true;
+        }
+
+        // Função para avançar para a próxima rodada
+        function nextRound() {
+            // Limpar cartas escolhidas
+            chosenCards = {};
+
+            // Habilitar botão de escolha para a próxima rodada
+            document.getElementById('cardSelector').disabled = false;
+
+            // Ocultar miniatura
+            document.getElementById('selectedCardThumbnail').src = '';
+
+            // Esconder botão "Próxima Rodada"
+            document.getElementById('nextRoundButton').classList.add('hidden');
+
+            // Embaralhar mãos de todos os jogadores
+            for (const player of players) {
+                playerHands[player].cards = getRandomCards(cardDeck, 10);
+            }
+
+            // Passar para o próximo jogador
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
+            // Atualizar a mão do jogador e os seletores
+            updatePlayerHand();
+            updateSelectors();
+        }
+
+        // Função para atualizar a mão do jogador na interface
+        function updatePlayerHand() {
+            const playerHandDiv = document.getElementById('playerHand');
+            const currentPlayer = players[currentPlayerIndex];
+            const hand = playerHands[currentPlayer];
+
+            playerHandDiv.innerHTML = `<p><strong>${currentPlayer}'s Mão:</strong></p>`;
+            if (hand.cards.length > 0) {
+                playerHandDiv.innerHTML += `<p>Cartas: ${hand.cards.map(card => card.name).join(', ')}</p>`;
+            }
+        }
+
+        // Função para atualizar o seletor de cartas na interface
+        function updateSelectors() {
+            const cardSelector = document.getElementById('cardSelector');
+
+            // Limpar seletor antigo
+            cardSelector.innerHTML = '';
+
+            // Preencher seletor com as cartas disponíveis
+            playerHands[players[currentPlayerIndex]].cards.forEach(card => {
+                cardSelector.innerHTML += `<option value="${card.name}">${card.name}</option>`;
+            });
+        }
+
+        // Função para atualizar a área de cartas selecionadas
+        function updateChosenCards() {
+            const chosenCardsDiv = document.getElementById('chosenCards');
+            chosenCardsDiv.innerHTML = '<p><strong>Cartas Selecionadas pelos Jogadores:</strong></p>';
+
+            players.forEach(player => {
+                if (chosenCards[player]) {
+                    const imageUrl = cardDeck.find(card => card.name === chosenCards[player])?.imageUrl || '';
+                    chosenCardsDiv.innerHTML += `<img class="card-thumbnail" src="${imageUrl}" alt="${chosenCards[player]}"> - ${player}<br>`;
+                }
+            });
+        }
+
+        // Função para obter um conjunto aleatório de cartas de um baralho
+        function getRandomCards(deck, numCards) {
+            const shuffledDeck = [...deck].sort(() => Math.random() - 0.5);
+            return shuffledDeck.slice(0, numCards);
+        }
+    </script>
+</body>
+</html>
